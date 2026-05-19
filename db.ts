@@ -46,6 +46,8 @@ let pool: Pool | any = {
 
 try {
   const dbConfig: any = {
+    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 10000,
     ...(isLocal ? {} : { ssl: { rejectUnauthorized: false } })
   };
   
@@ -65,7 +67,12 @@ export const query = async (text: string, params?: any[]) => {
     console.warn("Database query skipped because DATABASE_URL is not provided.");
     return { rows: [] };
   }
-  return pool.query(text, params);
+  try {
+    return await pool.query(text, params);
+  } catch (err: any) {
+    console.error(`[DB Error]: Failed query: ${text.substring(0, 50)}...`, err);
+    throw err;
+  }
 };
 
 export async function initDb() {
