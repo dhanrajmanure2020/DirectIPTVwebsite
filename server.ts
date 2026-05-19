@@ -6,9 +6,22 @@ import rateLimit from "express-rate-limit";
 import { createClient } from "@supabase/supabase-js";
 import { initDb, query, dbConnected } from "./db.js";
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://dummy.supabase.co';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'dummy';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+let supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://dummy.supabase.co';
+let supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'dummy';
+let supabase: any = {
+  auth: {
+    getUser: async () => ({ data: { user: null }, error: new Error("Supabase is not properly initialized. Check VITE_SUPABASE_URL format.") })
+  }
+};
+
+try {
+  // Validate URL format before passing to createClient
+  new URL(supabaseUrl);
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+} catch (err: any) {
+  console.error("❌ CRITICAL: Failed to initialize Supabase client. Your VITE_SUPABASE_URL is likely malformed.", err.message);
+  supabaseUrl = 'https://dummy.supabase.co'; // Fallback so other things don't crash referencing it
+}
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -383,12 +396,18 @@ if (process.env.DATABASE_URL) {
   // Subscription Plans
   app.get("/api/subscription-plans", async (_req, res) => {
     try {
-      if (!process.env.DATABASE_URL) return res.json(mockSubscriptionPlans);
+      if (!process.env.DATABASE_URL) {
+        console.log("No DATABASE_URL, returning mocks");
+        return res.json(mockSubscriptionPlans || []);
+      }
 
+      console.log("Fetching subscription plans from DB...");
       const result = await query("SELECT * FROM subscription_plans ORDER BY id ASC");
-      res.json(result.rows);
+      console.log(`Fetched ${result?.rows?.length} plans`);
+      res.json(result?.rows || []);
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.error("DB fetching error for subscription plans:", e);
+      res.status(500).json({ error: e.message, fallback: true });
     }
   });
 

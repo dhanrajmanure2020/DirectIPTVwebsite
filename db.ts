@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 import dns from 'dns';
 
 // Fix for Node.js 18+ resolving IPv6 first, which causes issues with Supabase databases
-dns.setDefaultResultOrder('ipv4first');
+if (dns && typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 dotenv.config();
 
@@ -33,10 +35,24 @@ try {
 
 const isLocal = dbUrl.includes('localhost') || dbUrl.includes('127.0.0.1');
 
-const pool = new Pool({
-  connectionString: dbUrl,
-  ...(isLocal ? {} : { ssl: { rejectUnauthorized: false } }),
-});
+let pool: Pool | any = {
+  query: async () => ({ rows: [] }),
+  connect: async () => { throw new Error('Database pool not initialized. Check your DATABASE_URL format.'); }
+};
+
+try {
+  const dbConfig: any = {
+    ...(isLocal ? {} : { ssl: { rejectUnauthorized: false } })
+  };
+  
+  if (dbUrl) {
+    dbConfig.connectionString = dbUrl;
+  }
+  
+  pool = new Pool(dbUrl ? dbConfig : undefined);
+} catch (err: any) {
+  console.error("❌ CRITICAL: Failed to initialize PostgreSQL Pool. Your DATABASE_URL is likely malformed or invalid.", err.message);
+}
 
 export let dbConnected = false;
 
