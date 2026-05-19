@@ -1,13 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'dummy';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'dummy';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || 'dummy';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || 'dummy';
 
 let client: ReturnType<typeof createClient> | any;
 
 try {
   if (supabaseUrl === 'dummy' || supabaseUrl === 'https://dummy.supabase.co') {
     throw new Error('VITE_SUPABASE_URL is missing or set to dummy. If you are on Vercel, please trigger a Redeployment after adding the environment variables.');
+  }
+  if (supabaseAnonKey === 'dummy') {
+    throw new Error('VITE_SUPABASE_ANON_KEY is missing.');
   }
   new URL(supabaseUrl);
   client = createClient(supabaseUrl, supabaseAnonKey);

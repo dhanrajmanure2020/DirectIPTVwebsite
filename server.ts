@@ -6,8 +6,8 @@ import rateLimit from "express-rate-limit";
 import { createClient } from "@supabase/supabase-js";
 import { initDb, query, dbConnected } from "./db";
 
-let supabaseUrl = process.env.VITE_SUPABASE_URL || 'dummy';
-let supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'dummy';
+let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'dummy';
+let supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'dummy';
 let supabase: any = {
   auth: {
     getUser: async () => ({ data: { user: null }, error: new Error("Supabase is not properly initialized. Check VITE_SUPABASE_URL format.") })
@@ -19,11 +19,14 @@ try {
   if (supabaseUrl === 'dummy' || supabaseUrl === 'https://dummy.supabase.co') {
     throw new Error('VITE_SUPABASE_URL is missing. Please add it to your environment variables.');
   }
+  if (supabaseAnonKey === 'dummy') {
+    throw new Error('VITE_SUPABASE_ANON_KEY is missing.');
+  }
   new URL(supabaseUrl);
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 } catch (err: any) {
   console.error("❌ CRITICAL: Failed to initialize Supabase client on backend:", err.message);
-  supabaseUrl = 'dummy'; // Fallback so other things don't crash referencing it
+  supabaseUrl = 'dummy'; // Fallback so we can bypass auth for preview
 }
 
 const app = express();
@@ -60,12 +63,13 @@ app.use("/api", limiter);
 // Authentication Middleware for Protected Routes
 const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   // For preview environment bypass if Supabase is not configured
-  if (!supabaseUrl || supabaseUrl === 'mock') {
+  if (!supabaseUrl || supabaseUrl === 'mock' || supabaseUrl === 'dummy' || supabaseUrl === 'https://dummy.supabase.co') {
       return next();
   }
 
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.error("requireAuth missing header:", authHeader);
     return res.status(401).json({ error: 'Missing or invalid authentication token' });
   }
   const token = authHeader.split(' ')[1];
@@ -79,11 +83,13 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
     const { data: { user }, error } = await supabase.auth.getUser(token);
     
     if (error || !user) {
-      return res.status(401).json({ error: 'Unauthorized access' });
+      console.error("requireAuth getUser error:", error?.message || "No user");
+      return res.status(401).json({ error: 'Unauthorized access', details: error?.message });
     }
     
     next();
-  } catch (err) {
+  } catch (err: any) {
+    console.error("requireAuth thrown error:", err.message);
     return res.status(401).json({ error: 'Auth error' });
   }
 };
