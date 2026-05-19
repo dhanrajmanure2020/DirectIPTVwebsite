@@ -21,7 +21,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' && !process.env.VERCEL ? 'https://your-production-url.com' : '*',
+  origin: process.env.NODE_ENV === 'production' && !process.env.VERCEL ? 'https://your-production-url.com' : true,
   credentials: true
 }));
 app.use(express.json());
