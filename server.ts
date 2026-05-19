@@ -6,7 +6,7 @@ import rateLimit from "express-rate-limit";
 import { createClient } from "@supabase/supabase-js";
 import { initDb, query, dbConnected } from "./db.js";
 
-let supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://dummy.supabase.co';
+let supabaseUrl = process.env.VITE_SUPABASE_URL || 'dummy';
 let supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'dummy';
 let supabase: any = {
   auth: {
@@ -16,11 +16,14 @@ let supabase: any = {
 
 try {
   // Validate URL format before passing to createClient
+  if (supabaseUrl === 'dummy' || supabaseUrl === 'https://dummy.supabase.co') {
+    throw new Error('VITE_SUPABASE_URL is missing. Please add it to your environment variables.');
+  }
   new URL(supabaseUrl);
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 } catch (err: any) {
-  console.error("❌ CRITICAL: Failed to initialize Supabase client. Your VITE_SUPABASE_URL is likely malformed.", err.message);
-  supabaseUrl = 'https://dummy.supabase.co'; // Fallback so other things don't crash referencing it
+  console.error("❌ CRITICAL: Failed to initialize Supabase client on backend:", err.message);
+  supabaseUrl = 'dummy'; // Fallback so other things don't crash referencing it
 }
 
 const app = express();
