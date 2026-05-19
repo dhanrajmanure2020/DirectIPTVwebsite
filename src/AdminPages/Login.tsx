@@ -22,6 +22,17 @@ export default function Login() {
     setError('');
 
     try {
+      if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL === 'https://dummy.supabase.co') {
+        // Mock login
+        if (email === 'admin@admin.com' && password === 'admin') {
+          localStorage.setItem('directiptv_admin_logged_in', 'true');
+          navigate('/admin/dashboard');
+          return;
+        } else {
+          throw new Error('Invalid mock credentials (use admin@admin.com / admin)');
+        }
+      }
+
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password
