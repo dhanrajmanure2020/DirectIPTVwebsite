@@ -22,7 +22,8 @@ try {
       signInWithPassword: async () => ({ error: new Error('Supabase Configuration Error: ' + err.message) }),
       signOut: async () => ({ error: null }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      getUser: async () => ({ data: { user: null }, error: new Error('Supabase Configuration Error: ' + err.message) })
+      getUser: async () => ({ data: { user: null }, error: new Error('Supabase Configuration Error: ' + err.message) }),
+      getSession: async () => ({ data: { session: null }, error: null })
     }
   };
 }

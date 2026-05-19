@@ -3,8 +3,12 @@ import dotenv from 'dotenv';
 import dns from 'dns';
 
 // Fix for Node.js 18+ resolving IPv6 first, which causes issues with Supabase databases
-if (dns && typeof dns.setDefaultResultOrder === 'function') {
-  dns.setDefaultResultOrder('ipv4first');
+try {
+  if (dns && typeof dns.setDefaultResultOrder === 'function') {
+    dns.setDefaultResultOrder('ipv4first');
+  }
+} catch (e) {
+  console.warn('Could not set DNS order', e);
 }
 
 dotenv.config();

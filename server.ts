@@ -94,13 +94,15 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
   }
 };
 
-// Initialize DB if DATABASE_URL is provided
-if (process.env.DATABASE_URL) {
+// Initialize DB if DATABASE_URL is provided, but skip in Vercel to avoid background connection on every function invocation
+if (process.env.DATABASE_URL && !process.env.VERCEL) {
   initDb().catch((e) => {
     console.warn("DB init failed", e);
   });
-} else {
+} else if (!process.env.DATABASE_URL) {
   console.warn("DATABASE_URL is not set. Database features will not work.");
+} else {
+  console.log("Skipping initDb() on Vercel to optimize cold starts.");
 }
 
   // In-memory fallbacks
@@ -480,6 +482,12 @@ if (process.env.DATABASE_URL) {
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
+  });
+
+  // Global error handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Unhandled Express Error:', err);
+    res.status(500).json({ error: err.message || 'Internal Server Error', stack: process.env.NODE_ENV === 'development' ? err.stack : undefined });
   });
 
   // Vite middleware for development

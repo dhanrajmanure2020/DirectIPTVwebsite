@@ -24,7 +24,8 @@ export default function AdminPromoCode() {
         active: p.active,
       })));
     } catch (e: any) {
-      toast.error(e.response?.data?.error || "Error fetching promo codes");
+      const errMsg = typeof e.response?.data?.error === 'object' ? JSON.stringify(e.response.data.error) : (e.response?.data?.error || "Error fetching promo codes");
+      toast.error(errMsg);
     }
   };
 

@@ -48,7 +48,8 @@ export function useAdminAuthAndPurchases() {
         }
       } catch (e: any) {
         console.error('Error fetching purchases:', e);
-        toast.error(`Database Error: ${e.response?.data?.error || e.message}`);
+        const errMsg = typeof e.response?.data?.error === 'object' ? JSON.stringify(e.response.data.error) : (e.response?.data?.error || e.message);
+        toast.error(`Database Error: ${errMsg}`);
       }
     };
 

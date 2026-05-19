@@ -50,7 +50,8 @@ export default function AdminFreeTrials() {
       })));
     } catch (e: any) {
       console.error('Failed to load free trials:', e);
-      toast.error(`Error loading trials: ${e.response?.data?.error || e.message}`);
+      const errMsg = typeof e.response?.data?.error === 'object' ? JSON.stringify(e.response.data.error) : (e.response?.data?.error || e.message);
+      toast.error(`Error loading trials: ${errMsg}`);
     }
   };
 
