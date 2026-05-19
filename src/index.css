@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Material+Icons&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-primary: #9ecaff;
+  --color-secondary: #f9abff;
+  --color-tertiary: #ffb5a0;
+  --color-background-dark: #030014;
+  --color-background-darker: #02000f;
+  
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  --animate-shimmer: shimmer 2s infinite linear;
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background-dark text-slate-100 font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .text-gradient {
+    @apply bg-linear-to-r from-blue-400 via-purple-500 to-orange-500 bg-clip-text text-transparent;
+  }
+
+  .btn-gradient {
+    @apply bg-linear-to-r from-blue-500 to-purple-600 transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)];
+  }
+
+  .accent-gradient {
+    background: linear-gradient(135deg, #2196f3 0%, #86039c 100%);
+  }
+  
+  /* Custom Scrollbar for Cinematic Feel */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-background-dark;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full border-2 border-background-dark hover:bg-white/20 transition-colors;
+  }
+}

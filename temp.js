@@ -1,0 +1,1 @@
+const fs = require('fs'); let c = fs.readFileSync('server.ts', 'utf8'); c = c.split('if (!process.env.DATABASE_URL)').join('if (!process.env.DATABASE_URL || !dbConnected)'); fs.writeFileSync('server.ts', c);
