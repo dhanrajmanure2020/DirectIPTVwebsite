@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -455,13 +454,15 @@ if (process.env.DATABASE_URL) {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
-    createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    }).then(vite => {
-      app.use(vite.middlewares);
-    }).catch(err => {
-      console.error("Failed to start Vite dev server:", err);
+    import("vite").then(({ createServer: createViteServer }) => {
+      createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      }).then(vite => {
+        app.use(vite.middlewares);
+      }).catch(err => {
+        console.error("Failed to start Vite dev server:", err);
+      });
     });
   } else if (!process.env.VERCEL) {
     const distPath = path.join(process.cwd(), 'dist');
