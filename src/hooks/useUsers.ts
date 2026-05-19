@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../lib/api';
 import { toast } from 'react-toastify';
+import { getErrorMessage } from '../lib/utils/errorUtils';
+
 
 export interface UserPurchase {
   id?: number;
@@ -48,8 +50,7 @@ export function useAdminAuthAndPurchases() {
         }
       } catch (e: any) {
         console.error('Error fetching purchases:', e);
-        const errMsg = typeof e.response?.data?.error === 'object' ? JSON.stringify(e.response.data.error) : (e.response?.data?.error || e.message);
-        toast.error(`Database Error: ${errMsg}`);
+        toast.error(`Database Error: ${getErrorMessage(e)}`);
       }
     };
 

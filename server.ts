@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createClient } from "@supabase/supabase-js";
-import { initDb, query, dbConnected } from "./db";
+import { initDb, query, dbConnected } from "./db.js";
 
 let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'dummy';
 let supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'dummy';
@@ -70,7 +70,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     console.error("requireAuth missing header:", authHeader);
-    return res.status(401).json({ error: 'Missing or invalid authentication token' });
+    return res.status(401).json({ success: false, error: 'Missing or invalid authentication token' });
   }
   const token = authHeader.split(' ')[1];
   
@@ -84,13 +84,13 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
     
     if (error || !user) {
       console.error("requireAuth getUser error:", error?.message || "No user");
-      return res.status(401).json({ error: 'Unauthorized access', details: error?.message });
+      return res.status(401).json({ success: false, error: 'Unauthorized access', details: error?.message });
     }
     
     next();
   } catch (err: any) {
     console.error("requireAuth thrown error:", err.message);
-    return res.status(401).json({ error: 'Auth error' });
+    return res.status(401).json({ success: false, error: 'Auth error' });
   }
 };
 
@@ -143,11 +143,11 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
       res.status(201).json({ success: true });
     } catch (e: any) {
       if (e.code === '23505') {
-         res.status(400).json({ error: 'An admin with this email already exists.' });
+         res.status(400).json({ success: false, error: 'An admin with this email already exists.' });
       } else {
          console.error(e);
       if (e && e.stack) console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
       }
     }
   });
@@ -166,7 +166,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -180,7 +180,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -228,7 +228,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
       console.error("DB Insert Error Purchases:", e);
       console.error(e);
       if (e && e.stack) console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -272,7 +272,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -294,7 +294,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -311,7 +311,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -328,7 +328,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -350,7 +350,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
       const { code, discountPercentage, active } = req.body;
       if (!process.env.DATABASE_URL) {
         if (mockPromos.some(p => p.code === code)) {
-          return res.status(400).json({ error: 'A promo code with this name already exists.' });
+          return res.status(400).json({ success: false, error: 'A promo code with this name already exists.' });
         }
         const newPromo = {
           id: Date.now(),
@@ -371,11 +371,11 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
       res.status(201).json(result.rows[0]);
     } catch (e: any) {
       if (e.code === '23505') {
-        res.status(400).json({ error: 'A promo code with this name already exists.' });
+        res.status(400).json({ success: false, error: 'A promo code with this name already exists.' });
       } else {
         console.error(e);
       if (e && e.stack) console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
       }
     }
   });
@@ -386,7 +386,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
       const { code, discountPercentage, active } = req.body;
       if (!process.env.DATABASE_URL) {
         if (mockPromos.some(p => p.code === code && p.id.toString() !== id)) {
-          return res.status(400).json({ error: 'A promo code with this name already exists.' });
+          return res.status(400).json({ success: false, error: 'A promo code with this name already exists.' });
         }
         const promo = mockPromos.find(p => p.id.toString() === id);
         if (promo) {
@@ -404,11 +404,11 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
       res.json(result.rows[0]);
     } catch (e: any) {
       if (e.code === '23505') {
-        res.status(400).json({ error: 'A promo code with this name already exists.' });
+        res.status(400).json({ success: false, error: 'A promo code with this name already exists.' });
       } else {
         console.error(e);
       if (e && e.stack) console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
       }
     }
   });
@@ -426,7 +426,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -464,7 +464,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -491,7 +491,7 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
@@ -508,14 +508,14 @@ if (process.env.DATABASE_URL && !process.env.VERCEL) {
     } catch (e: any) {
       console.error(e);
       console.error(e.stack);
-      res.status(400).json({ success: false, error: e.message || "Unknown database error", fullError: e });
+      res.status(500).json({ success: false, error: e.message || "Unknown database error", fullError: e });
     }
   });
 
   // Global error handler
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Unhandled Express Error:', err);
-    res.status(400).json({ success: false, error: err.message || 'Internal Server Error', fullError: err });
+    res.status(500).json({ success: false, error: err.message || 'Internal Server Error', fullError: err });
   });
 
   // Vite middleware for development

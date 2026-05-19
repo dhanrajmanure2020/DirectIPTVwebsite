@@ -8,6 +8,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Check, ShieldCheck, Mail, User, Tv, Film, XCircle, Smartphone, Loader2, ArrowRight, AlertCircle } from 'lucide-react';
 import { SEO } from '../components/SEO';
+import { getErrorMessage } from '../lib/utils/errorUtils';
+
 
 type FormData = {
   firstName: string;
@@ -111,7 +113,7 @@ export default function FreeTrial() {
         });
       } catch (err: any) {
         console.error('Failed saving to API:', err);
-        toast.error(`Error saving request: ${err.response?.data?.error || err.message}`);
+        toast.error(`Error saving request: ${getErrorMessage(err, err.message)}`);
       }
 
       setSubmittedData({ ...data, submittedAt: new Date() });

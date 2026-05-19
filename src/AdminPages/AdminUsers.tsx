@@ -4,6 +4,8 @@ import { Users as UsersIcon, Search, Shield, UserPlus, Trash2, Edit, X, Save } f
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from '../lib/api';
+import { getErrorMessage } from '../lib/utils/errorUtils';
+
 
 interface AdminUser {
   id: string;
@@ -67,7 +69,7 @@ export default function AdminUsers() {
       setIsModalOpen(false);
       fetchAdminUsers();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to update user');
+      toast.error(getErrorMessage(err, 'Failed to update user'));
     }
   };
 
@@ -79,7 +81,7 @@ export default function AdminUsers() {
       setIsDeleteModalOpen(false);
       fetchAdminUsers();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to delete user');
+      toast.error(getErrorMessage(err, 'Failed to delete user'));
     }
   };
 

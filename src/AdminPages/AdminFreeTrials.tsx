@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Tv, Search, Trash2, Mail, Phone, Calendar, Monitor, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from '../lib/api';
+import { getErrorMessage } from '../lib/utils/errorUtils';
+
 
 interface FreeTrialRecord {
   id: string;
@@ -50,8 +52,7 @@ export default function AdminFreeTrials() {
       })));
     } catch (e: any) {
       console.error('Failed to load free trials:', e);
-      const errMsg = typeof e.response?.data?.error === 'object' ? JSON.stringify(e.response.data.error) : (e.response?.data?.error || e.message);
-      toast.error(`Error loading trials: ${errMsg}`);
+      toast.error(`Error loading trials: ${getErrorMessage(e)}`);
     }
   };
 

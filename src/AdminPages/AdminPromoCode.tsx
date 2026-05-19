@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 import { Ticket, Plus, Save, TrendingUp, X, Activity, Trash2, Edit } from 'lucide-react';
 import axios from '../lib/api';
 import { toast } from 'react-toastify';
+import { getErrorMessage } from '../lib/utils/errorUtils';
+
 
 interface PromoCode {
   id: string;
@@ -24,8 +26,7 @@ export default function AdminPromoCode() {
         active: p.active,
       })));
     } catch (e: any) {
-      const errMsg = typeof e.response?.data?.error === 'object' ? JSON.stringify(e.response.data.error) : (e.response?.data?.error || "Error fetching promo codes");
-      toast.error(errMsg);
+      toast.error(getErrorMessage(e, 'Error fetching data'));
     }
   };
 
@@ -83,7 +84,7 @@ export default function AdminPromoCode() {
       fetchPromos();
       handleCloseModal();
     } catch (e: any) {
-      toast.error(e.response?.data?.error || "An error occurred while saving the promo code.");
+      toast.error(getErrorMessage(e, "An error occurred while saving the promo code."));
     }
   };
 
@@ -92,7 +93,7 @@ export default function AdminPromoCode() {
       await axios.delete(`/api/promos/${id}`);
       fetchPromos();
     } catch (e: any) {
-      toast.error(e.response?.data?.error || "Error deleting promo");
+      toast.error(getErrorMessage(e, "Error deleting promo"));
     }
   };
 
@@ -107,7 +108,7 @@ export default function AdminPromoCode() {
       });
       fetchPromos();
     } catch (e: any) {
-      toast.error(e.response?.data?.error || "Error toggling promo status");
+      toast.error(getErrorMessage(e, "Error toggling promo status"));
     }
   };
 
