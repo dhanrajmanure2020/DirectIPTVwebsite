@@ -11,7 +11,7 @@ const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'dummy';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Trust proxy for rate limiting behind reverse proxy headers
 app.set('trust proxy', 1);
@@ -92,13 +92,13 @@ if (process.env.DATABASE_URL) {
 
   // --- API Routes ---
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", dbConfigured: !(!process.env.DATABASE_URL || !dbConnected) });
+    res.json({ status: "ok", dbConfigured: !(!process.env.DATABASE_URL) });
   });
 
   // Admin Users Routes
   app.get("/api/admin-users", requireAuth, async (_req, res) => {
     try {
-      if (!process.env.DATABASE_URL || !dbConnected) return res.json([]);
+      if (!process.env.DATABASE_URL) return res.json([]);
       const result = await query("SELECT * FROM admin_users ORDER BY created_at DESC");
       res.json(result.rows);
     } catch (e: any) {
@@ -109,7 +109,7 @@ if (process.env.DATABASE_URL) {
   app.post("/api/admin-users", requireAuth, async (req, res) => {
     try {
       const { id, fullName, email, phone, role, status } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) return res.status(201).json({ success: true });
+      if (!process.env.DATABASE_URL) return res.status(201).json({ success: true });
 
       await query(
         `INSERT INTO admin_users (id, full_name, email, phone, role, status) VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -129,7 +129,7 @@ if (process.env.DATABASE_URL) {
     try {
       const { id } = req.params;
       const { full_name, phone, role, status } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) return res.status(200).json({ success: true });
+      if (!process.env.DATABASE_URL) return res.status(200).json({ success: true });
 
       await query(
         `UPDATE admin_users SET full_name = $1, phone = $2, role = $3, status = $4 WHERE id = $5`,
@@ -145,7 +145,7 @@ if (process.env.DATABASE_URL) {
     try {
       // For a real app, we should also delete from Supabase Auth via Admin API
       // Since we don't have the Service Role Key here easily, we'll just delete from DB.
-      if (!process.env.DATABASE_URL || !dbConnected) return res.status(204).send();
+      if (!process.env.DATABASE_URL) return res.status(204).send();
       await query(`DELETE FROM admin_users WHERE id = $1`, [req.params.id]);
       res.status(204).send();
     } catch (e: any) {
@@ -156,7 +156,7 @@ if (process.env.DATABASE_URL) {
   // Purchases
   app.get("/api/purchases", requireAuth, async (_req, res) => {
     try {
-      if (!process.env.DATABASE_URL || !dbConnected) return res.json(mockPurchases);
+      if (!process.env.DATABASE_URL) return res.json(mockPurchases);
       const result = await query("SELECT * FROM purchases ORDER BY date DESC");
       res.json(result.rows);
     } catch (e: any) {
@@ -167,7 +167,7 @@ if (process.env.DATABASE_URL) {
   app.post("/api/purchases", async (req, res) => {
     try {
       const { fullName, email, country, phone, deviceType, macAddress, planName, devices, total, paymentMethod } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         const newPurchase = {
           id: Date.now(),
           full_name: fullName,
@@ -201,7 +201,7 @@ if (process.env.DATABASE_URL) {
   // Free Trials
   app.get("/api/free-trials", requireAuth, async (_req, res) => {
     try {
-      if (!process.env.DATABASE_URL || !dbConnected) return res.json(mockFreeTrials);
+      if (!process.env.DATABASE_URL) return res.json(mockFreeTrials);
       const result = await query("SELECT * FROM free_trials ORDER BY date DESC");
       res.json(result.rows);
     } catch (e: any) {
@@ -212,7 +212,7 @@ if (process.env.DATABASE_URL) {
   app.post("/api/free-trials", async (req, res) => {
     try {
       const { name, email, phone, country, device, status, macAddress } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
          const newTrial = {
            id: Date.now(),
            name,
@@ -243,7 +243,7 @@ if (process.env.DATABASE_URL) {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         const trial = mockFreeTrials.find(t => t.id.toString() === id);
         if (trial) trial.status = status;
         return res.json(trial || { status });
@@ -262,7 +262,7 @@ if (process.env.DATABASE_URL) {
   app.delete("/api/free-trials/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         mockFreeTrials = mockFreeTrials.filter(t => t.id.toString() !== id);
         return res.status(204).send();
       }
@@ -277,7 +277,7 @@ if (process.env.DATABASE_URL) {
   app.delete("/api/purchases/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
          mockPurchases = mockPurchases.filter(p => p.id.toString() !== id);
          return res.status(204).send();
       }
@@ -292,7 +292,7 @@ if (process.env.DATABASE_URL) {
   // Promos
   app.get("/api/promos", async (_req, res) => {
     try {
-      if (!process.env.DATABASE_URL || !dbConnected) return res.json(mockPromos);
+      if (!process.env.DATABASE_URL) return res.json(mockPromos);
 
       const result = await query("SELECT * FROM promos ORDER BY created_at DESC");
       res.json(result.rows);
@@ -304,7 +304,7 @@ if (process.env.DATABASE_URL) {
   app.post("/api/promos", requireAuth, async (req, res) => {
     try {
       const { code, discountPercentage, active } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         if (mockPromos.some(p => p.code === code)) {
           return res.status(400).json({ error: 'A promo code with this name already exists.' });
         }
@@ -338,7 +338,7 @@ if (process.env.DATABASE_URL) {
     try {
       const { id } = req.params;
       const { code, discountPercentage, active } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         if (mockPromos.some(p => p.code === code && p.id.toString() !== id)) {
           return res.status(400).json({ error: 'A promo code with this name already exists.' });
         }
@@ -368,7 +368,7 @@ if (process.env.DATABASE_URL) {
   app.delete("/api/promos/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         mockPromos = mockPromos.filter(p => p.id.toString() !== id);
         return res.status(204).send();
       }
@@ -383,7 +383,7 @@ if (process.env.DATABASE_URL) {
   // Subscription Plans
   app.get("/api/subscription-plans", async (_req, res) => {
     try {
-      if (!process.env.DATABASE_URL || !dbConnected) return res.json(mockSubscriptionPlans);
+      if (!process.env.DATABASE_URL) return res.json(mockSubscriptionPlans);
 
       const result = await query("SELECT * FROM subscription_plans ORDER BY id ASC");
       res.json(result.rows);
@@ -395,7 +395,7 @@ if (process.env.DATABASE_URL) {
   app.post("/api/subscription-plans", requireAuth, async (req, res) => {
     try {
       const { devices, duration, price, sub_text } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         const newPlan = { id: Date.now(), devices, duration, price, sub_text };
         mockSubscriptionPlans.push(newPlan);
         return res.status(201).json(newPlan);
@@ -416,7 +416,7 @@ if (process.env.DATABASE_URL) {
     try {
       const { id } = req.params;
       const { devices, duration, price, sub_text } = req.body;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         const plan = mockSubscriptionPlans.find(p => p.id.toString() === id);
         if (plan) {
           plan.devices = devices;
@@ -440,7 +440,7 @@ if (process.env.DATABASE_URL) {
   app.delete("/api/subscription-plans/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      if (!process.env.DATABASE_URL || !dbConnected) {
+      if (!process.env.DATABASE_URL) {
         mockSubscriptionPlans = mockSubscriptionPlans.filter(p => p.id.toString() !== id);
         return res.status(204).send();
       }
@@ -473,7 +473,7 @@ if (process.env.DATABASE_URL) {
   }
 
   if (!process.env.VERCEL) {
-    app.listen(PORT, "0.0.0.0", () => {
+    app.listen(PORT as number, "0.0.0.0", () => {
       console.log(`Server running on port ${PORT}`);
     });
   }

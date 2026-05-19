@@ -41,8 +41,8 @@ const pool = new Pool({
 export let dbConnected = false;
 
 export const query = async (text: string, params?: any[]) => {
-  if (!dbConnected) {
-    console.warn("Database query skipped because DB is not reachable.");
+  if (!process.env.DATABASE_URL) {
+    console.warn("Database query skipped because DATABASE_URL is not provided.");
     return { rows: [] };
   }
   return pool.query(text, params);
