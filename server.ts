@@ -6,8 +6,8 @@ import rateLimit from "express-rate-limit";
 import { createClient } from "@supabase/supabase-js";
 import { initDb, query, dbConnected } from "./db.js";
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://dummy.supabase.co';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'dummy';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const app = express();
