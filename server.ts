@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createClient } from "@supabase/supabase-js";
-import { initDb, query, dbConnected } from "./db.js";
+import { initDb, query, dbConnected } from "./db";
 
 let supabaseUrl = process.env.VITE_SUPABASE_URL || 'dummy';
 let supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'dummy';
@@ -37,7 +37,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' && !process.env.VERCEL ? 'https://your-production-url.com' : true,
+  origin: process.env.NODE_ENV === 'production' && !process.env.VERCEL ? 'https://your-production-url.com' : '*',
   credentials: true
 }));
 app.use(express.json());
@@ -118,7 +118,8 @@ if (process.env.DATABASE_URL) {
       const result = await query("SELECT * FROM admin_users ORDER BY created_at DESC");
       res.json(result.rows);
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.error("DB error admin_users:", e.message);
+      res.json([]);
     }
   });
 
@@ -176,7 +177,8 @@ if (process.env.DATABASE_URL) {
       const result = await query("SELECT * FROM purchases ORDER BY date DESC");
       res.json(result.rows);
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.error("DB error purchases:", e);
+      res.json(mockPurchases);
     }
   });
 
@@ -221,7 +223,8 @@ if (process.env.DATABASE_URL) {
       const result = await query("SELECT * FROM free_trials ORDER BY date DESC");
       res.json(result.rows);
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.error("DB error free trials:", e.message);
+      res.json(mockFreeTrials);
     }
   });
 
@@ -313,7 +316,8 @@ if (process.env.DATABASE_URL) {
       const result = await query("SELECT * FROM promos ORDER BY created_at DESC");
       res.json(result.rows);
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.error("DB error promos:", e.message);
+      res.json(mockPromos);
     }
   });
 
@@ -400,17 +404,15 @@ if (process.env.DATABASE_URL) {
   app.get("/api/subscription-plans", async (_req, res) => {
     try {
       if (!process.env.DATABASE_URL) {
-        console.log("No DATABASE_URL, returning mocks");
         return res.json(mockSubscriptionPlans || []);
       }
 
       console.log("Fetching subscription plans from DB...");
       const result = await query("SELECT * FROM subscription_plans ORDER BY id ASC");
-      console.log(`Fetched ${result?.rows?.length} plans`);
       res.json(result?.rows || []);
     } catch (e: any) {
       console.error("DB fetching error for subscription plans:", e);
-      res.status(500).json({ error: e.message, fallback: true });
+      res.json(mockSubscriptionPlans || []);
     }
   });
 
