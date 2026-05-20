@@ -50,13 +50,7 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 100, 
   standardHeaders: true, 
-  legacyHeaders: false,
-  validate: { xForwardedForHeader: false, trustProxy: false },
-  keyGenerator: (req) => {
-    const forwarded = req.headers['x-forwarded-for'] || req.headers['forwarded'];
-    const ip = forwarded ? (Array.isArray(forwarded) ? forwarded[0] : forwarded) : req.ip;
-    return String(ip || 'unknown');
-  }
+  legacyHeaders: false
 });
 app.use("/api", limiter);
 

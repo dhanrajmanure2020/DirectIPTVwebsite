@@ -11,14 +11,34 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Fallback to local storage if Supabase isn't completely set up, 
-      // but if we are fully on Supabase we could rely purely on it.
-      if (!session && !localStorage.getItem('directiptv_admin_logged_in')) {
-        navigate('/admin/login');
-      } else {
-        setLoading(false);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.warn("Session check returned error in AdminLayout:", error);
+          if (error.message?.includes('Refresh Token') || error.message?.includes('invalid_grant')) {
+            localStorage.removeItem('directiptv_admin_logged_in');
+            await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+            navigate('/admin/login');
+            return;
+          }
+        }
+        
+        // Fallback to local storage if Supabase isn't completely set up, 
+        // but if we are fully on Supabase we could rely purely on it.
+        if (!session && !localStorage.getItem('directiptv_admin_logged_in')) {
+          navigate('/admin/login');
+        } else {
+          setLoading(false);
+        }
+      } catch (e: any) {
+        console.error("Exception in checkSession in AdminLayout:", e);
+        if (e?.message?.includes('Refresh Token') || e?.message?.includes('invalid_grant')) {
+          localStorage.removeItem('directiptv_admin_logged_in');
+          await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+          navigate('/admin/login');
+        } else {
+          setLoading(false);
+        }
       }
     };
     checkSession();

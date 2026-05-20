@@ -7,7 +7,17 @@ const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn('Session check returned error in API request interceptor:', error);
+      if (error.message?.includes('Refresh Token') || error.message?.includes('invalid_grant')) {
+        localStorage.removeItem('directiptv_admin_logged_in');
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        if (window.location.pathname.startsWith('/admin')) {
+          window.location.href = '/admin/login';
+        }
+      }
+    }
     if (session?.access_token) {
       config.headers['Authorization'] = `Bearer ${session.access_token}`;
     } else {
@@ -16,8 +26,14 @@ api.interceptors.request.use(async (config) => {
         config.headers['Authorization'] = `Bearer mock-token`;
       }
     }
-  } catch (e) {
-    console.error('Error fetching session', e);
+  } catch (e: any) {
+    console.error('Error fetching session inside request interceptor:', e);
+    if (e?.message?.includes('Refresh Token') || e?.message?.includes('invalid_grant')) {
+      localStorage.removeItem('directiptv_admin_logged_in');
+      if (window.location.pathname.startsWith('/admin')) {
+        window.location.href = '/admin/login';
+      }
+    }
   }
   return config;
 }, (error) => {

@@ -1,11 +1,35 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Users as UsersIcon, Search, Monitor } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Users as UsersIcon, Search, Monitor, Trash2 } from 'lucide-react';
 import { useAdminAuthAndPurchases, UserPurchase } from '../hooks/useUsers';
+import { toast } from 'react-toastify';
+import axios from '../lib/api';
 
 export default function Users() {
-  const { purchases: users } = useAdminAuthAndPurchases();
+  const { purchases: users, fetchPurchases } = useAdminAuthAndPurchases();
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserPurchase | null>(null);
+
+  const handleDeleteClick = (user: UserPurchase) => {
+    setUserToDelete(user);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await axios.delete(`/api/purchases/${userToDelete.id}`);
+      toast.success('Record deleted successfully');
+      await fetchPurchases();
+    } catch (err) {
+      console.error('Failed to delete user record:', err);
+      toast.error('Failed to delete record');
+    } finally {
+      setDeleteModalOpen(false);
+      setUserToDelete(null);
+    }
+  };
 
   const filteredUsers = (users || []).filter((u: UserPurchase) => 
     (u.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,12 +77,13 @@ export default function Users() {
                   <th className="py-4 px-6 text-xs font-black uppercase tracking-widest text-slate-500">Contact & Location</th>
                   <th className="py-4 px-6 text-xs font-black uppercase tracking-widest text-slate-500">Device Setup</th>
                   <th className="py-4 px-6 text-xs font-black uppercase tracking-widest text-slate-500">Plan & Billing</th>
+                  <th className="py-4 px-6 text-xs font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-16 px-6 text-center text-slate-500">
+                    <td colSpan={5} className="py-16 px-6 text-center text-slate-500">
                       <UsersIcon className="h-12 w-12 mx-auto text-slate-600 mb-4 opacity-50" />
                       <p className="text-lg font-bold text-slate-400">
                         {searchTerm ? 'No users matching your search.' : 'No users found.'}
@@ -101,6 +126,15 @@ export default function Users() {
                           </span>
                         </div>
                       </td>
+                      <td className="py-5 px-6 whitespace-nowrap text-right">
+                        <button
+                          onClick={() => handleDeleteClick(user)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all text-xs font-bold shadow-lg shadow-red-500/25"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -108,6 +142,46 @@ export default function Users() {
             </table>
           </div>
         </motion.div>
-      </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setDeleteModalOpen(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative z-[101] w-full max-w-md bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl p-6 md:p-8"
+            >
+              <h3 className="text-xl font-bold text-white mb-2">Delete Record?</h3>
+              <p className="text-slate-400 mb-6 text-sm">
+                Are you sure you want to delete this record? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end mt-4">
+                <button
+                  onClick={() => setDeleteModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-white/10 bg-transparent hover:bg-white/5 text-white font-medium transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium transition-all shadow-lg shadow-red-500/25"
+                >
+                  Confirm Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

@@ -70,6 +70,11 @@ export const query = async (text: string, params?: any[]) => {
   try {
     return await pool.query(text, params);
   } catch (err: any) {
+    if (err.code === 'ENOTFOUND' && err.message && err.message.includes('.supabase.co')) {
+      err.message = `Supabase connection failed on Vercel (ENOTFOUND). Please update your DATABASE_URL in Vercel to use the Supabase Connection Pooler (e.g., aws-0-[region].pooler.supabase.com) instead of the direct database URL (db.[id].supabase.co) because Vercel IPv4 cannot reach it. Original error: ${err.message}`;
+    } else if (err.message && err.message.includes('ENOTFOUND') && err.message.includes('.supabase.co')) {
+      err.message = `Supabase connection failed on Vercel (ENOTFOUND). Please update your DATABASE_URL in Vercel to use the Supabase Connection Pooler URL. Original error: ${err.message}`;
+    }
     console.error(`[DB Error]: Failed query: ${text.substring(0, 50)}...`, err);
     throw err;
   }
